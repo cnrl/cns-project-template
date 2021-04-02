@@ -76,6 +76,7 @@ class Monitor:
             The recording log of the requested variable.
 
         """
+        # print(self.recording[variable])
         logs = torch.cat(self.recording[variable], 0)
         if self.time == 0:
             self.recording[variable] = []
