@@ -315,6 +315,7 @@ class LIFPopulation(NeuralPopulation):
         learning: bool = True,
         R: float = np.inf,
         C: float = 0,
+        threshold: int = -55,
         **kwargs
     ) -> None:
         super().__init__(
@@ -327,56 +328,36 @@ class LIFPopulation(NeuralPopulation):
             learning=learning,
         )
 
-        self.U_rest = -70
-        self.U = torch.ones(self.n) * self.U_rest
-        self.threshold = -55
+        self.u_rest = -70
+        self.u = torch.ones(self.n) * self.u_rest
+        self.threshold = threshold
         self.R = R
         self.tau = R * C
-        self.v = self.U
         self.s = torch.Tensor()
 
-        # dt should be set from outside
-        """
-        TODO.
 
-        1. Add the required parameters.
-        2. Fill the body accordingly.
+    def forward(self, traces: torch.tensor) -> None:
         """
-
-    def forward(self, t: int, traces: torch.Tensor) -> None:
+        This is the main method responsible for one step of neuron simulation.
         """
-        TODO.
-
-        1. Make use of other methods to fill the body. This is the main method\
-           responsible for one step of neuron simulation.
-        2. You might need to call the method from parent class.
-        """
-        self.compute_potential(t, traces)
+        self.compute_potential(traces)
         self.compute_spike()
         return
 
-    def compute_potential(self, t: int, traces: torch.Tensor) -> None:
+    def compute_potential(self, traces: torch.tensor) -> None:
         """
-        TODO.
-        
-        Implement the neural dynamics for computing the potential of LIF\
-        neurons. The method can either make changes to attributes directly or\
-        return the result for further use.
+        This method implements the neural dynamics for computing the potential of LIF\
+        neurons.
         """
-        self.U -= (self.dt / self.tau)*(self.U - self.U_rest - self.R * traces[t])
-        self.v = self.U
+        self.u -= (self.dt / self.tau)*(self.u - self.u_rest - self.R * traces)
         return
 
     def compute_spike(self) -> None:
         """
-        TODO.
-
-        Implement the spike condition. The method can either make changes to\
-        attributes directly or return the result for further use.
+        This method implements the spike condition.
         """
-        spike = np.array(self.U >= self.threshold)*1
-        self.U = (torch.from_numpy(1-spike)*(self.U-self.U_rest))+self.U_rest
-        self.s = torch.Tensor(spike)
+        self.s = self.u >= torch.tensor(self.threshold)
+        self.u = ((~self.s)*(self.u-self.u_rest))+self.u_rest
         return
 
     @abstractmethod
@@ -388,7 +369,7 @@ class LIFPopulation(NeuralPopulation):
         make changes to attributes directly or return the computed value for\
         further use.
         """
-        self.U[neuron_idx] = self.U_rest
+        self.u[neuron_idx] = self.u_rest
         return
 
     @abstractmethod
